@@ -213,7 +213,7 @@ if __name__ == "__main__":
     num_classes = len(dataset.classes)
 
     # Initialize Model & ArcFace
-    model = VideoResNet50(embedding_dim=EMBEDDING_DIM).to(device)
+    model = VideoResNet80(embedding_dim=EMBEDDING_DIM).to(device)
     arcface_layer = ArcFaceLayer(in_features=EMBEDDING_DIM, num_classes=num_classes).to(device)
 
     # 1. Train the model to cluster well
