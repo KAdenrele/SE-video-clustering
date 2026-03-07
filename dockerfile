@@ -18,7 +18,7 @@ RUN uv pip install --system --no-cache \
     opencv-python-headless \
     scikit-learn \
     torchvision \
-    datasets \
+    "datasets<2.20.0"\
     pandas \
     plotly
 

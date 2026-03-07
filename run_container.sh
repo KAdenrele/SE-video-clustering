@@ -1,5 +1,1 @@
-docker run --rm -it \
-  --gpus all \
-  -v /mnt/data/test_dataset/raw/video:/workspace/video_data \
-  -v /home/ade/SE-video-clustering:/workspace/video_cluster \
-  video_custering
+docker run --rm -it   --gpus all   --shm-size=8g   -v /mnt/data/test_dataset/raw/videos:/workspace/video_data   -v /home/ade/SE-video-clustering:/workspace/video_cluster   video_clustering

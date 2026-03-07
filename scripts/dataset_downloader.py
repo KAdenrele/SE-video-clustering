@@ -11,7 +11,7 @@ VIDEOS_PER_LABEL = 50
 DATASET_CONFIGS = {
     "AEGIS": {
         "repo": "Clarifiedfish/AEGIS",
-        "split_preference": ["test", "train"], 
+        "split_preference": ["hard_test_set", "test", "train"],
         "video_col": "video", 
         "label_col": "label",       # Usually 'real' or 'fake'
         "model_col": "generator",   # The specific model (e.g., Sora, Kling)
@@ -30,8 +30,8 @@ DATASET_CONFIGS = {
         "split_preference": ["test", "train"],
         "video_col": "video",
         "label_col": "label",
-        "model_col": "source",      # Uses 'source' to denote the generator
-        "trust_remote": False
+        "model_col": "source",      
+        "trust_remote": True        # <--- Change this to True
     },
     "FakeParts": {
         "repo": "hi-paris/FakeParts_Legacy",
