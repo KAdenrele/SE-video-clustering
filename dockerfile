@@ -16,11 +16,14 @@ RUN apt-get update && apt-get install -y \
 RUN uv pip install --system --no-cache \
     opencv-python-headless \
     scikit-learn \
-    matplotlib \
-    torchvision
+    torchvision \
+    datasets \
+    pandas \
+    plotly
 
+    
 # Copy your script into the container
-COPY cluster_videos.py .
+COPY main.py .
 
 # Default command
-CMD ["python", "cluster_videos.py"]
+CMD ["python", "main.py"]

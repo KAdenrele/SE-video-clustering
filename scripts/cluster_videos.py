@@ -8,14 +8,15 @@ from torch.utils.data import Dataset, DataLoader
 import torchvision.models as models
 import torchvision.transforms as T
 from sklearn.manifold import TSNE
-import matplotlib.pyplot as plt
+import pandas as pd
+import plotly.express as px
 
 # ==========================================
 # 1. DATASET & VIDEO PROCESSING
 # ==========================================
 class VideoDirectoryDataset(Dataset):
     """Loads videos from a directory where subfolders represent class labels."""
-    def __init__(self, root_dir, num_frames=16, transform=None):
+    def __init__(self, root_dir, num_frames=70, transform=None):
         self.root_dir = root_dir
         self.num_frames = num_frames
         self.transform = transform
@@ -65,12 +66,12 @@ class VideoDirectoryDataset(Dataset):
 # ==========================================
 # 2. MODEL ARCHITECTURE
 # ==========================================
-class VideoResNet80(nn.Module):
-    """Extracts features using ResNet-80 and averages them across frames."""
+class VideoResNet101(nn.Module):
+    """Extracts features using ResNet-101 and averages them across frames."""
     def __init__(self, embedding_dim=512):
         super().__init__()
-        weights = models.ResNet80_Weights.DEFAULT
-        resnet = models.resnet80(weights=weights)
+        weights = models.ResNet101_Weights.DEFAULT
+        resnet = models.resnet101(weights=weights)
         
         # Remove the final classification layer
         self.backbone = nn.Sequential(*list(resnet.children())[:-1])
@@ -165,63 +166,35 @@ def extract_embeddings(model, dataloader, device):
     return torch.cat(all_embeddings).numpy(), torch.cat(all_labels).numpy()
 
 # ==========================================
-# 4. VISUALIZATION
+# 4. VISUALIZATION (PLOTLY)
 # ==========================================
-def plot_clusters(embeddings, labels, class_names, output_path="clusters.png"):
-    """Uses t-SNE to reduce embeddings to 2D and saves a plot."""
+def plot_clusters_plotly(embeddings, labels, class_names, video_paths, output_path="clusters.html"):
+    """Uses t-SNE to reduce embeddings to 2D and saves an interactive HTML plot."""
     print("Running t-SNE reduction...")
     tsne = TSNE(n_components=2, random_state=42, perplexity=min(30, len(embeddings)-1))
     embeddings_2d = tsne.fit_transform(embeddings)
 
-    plt.figure(figsize=(10, 8))
-    scatter = plt.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1], c=labels, cmap='tab10', alpha=0.7)
+    # Map the numeric labels back to their actual string names (e.g., 'Sora', 'Real')
+    label_names = [class_names[lbl] for lbl in labels]
+
+    # Create a DataFrame for Plotly
+    df = pd.DataFrame({
+        't-SNE Component 1': embeddings_2d[:, 0],
+        't-SNE Component 2': embeddings_2d[:, 1],
+        'Generator Model': label_names,
+        'Video Path': video_paths
+    })
+
+    # Generate the interactive scatter plot
+    fig = px.scatter(
+        df, 
+        x='t-SNE Component 1', 
+        y='t-SNE Component 2', 
+        color='Generator Model',
+        hover_data=['Video Path'], # This adds the filepath to the tooltip
+        title="ArcFace Video Embeddings (t-SNE Projection)"
+    )
     
-    # Add legend
-    handles = [plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=scatter.cmap(scatter.norm(i)), markersize=10) 
-               for i in range(len(class_names))]
-    plt.legend(handles, class_names, title="Classes")
-    
-    plt.title("ArcFace Video Embeddings (t-SNE Projection)")
-    plt.xlabel("t-SNE Component 1")
-    plt.ylabel("t-SNE Component 2")
-    plt.savefig(output_path)
-    print(f"Cluster visualization saved to {output_path}")
-
-# ==========================================
-# 5. ORCHESTRATION (MAIN)
-# ==========================================
-if __name__ == "__main__":
-    # Settings
-    DATA_DIR = "./video_data" # Change this to your directory path
-    EPOCHS = 10
-    BATCH_SIZE = 8
-    EMBEDDING_DIM = 512
-    
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
-
-    # Standard ImageNet transforms
-    transform = T.Compose([
-        T.Resize((224, 224)),
-        T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
-
-    # Setup Data
-    # NOTE: Ensure your directories look like: ./video_data/class1/vid.mp4, ./video_data/class2/vid.mp4
-    dataset = VideoDirectoryDataset(DATA_DIR, num_frames=16, transform=transform)
-    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
-    num_classes = len(dataset.classes)
-
-    # Initialize Model & ArcFace
-    model = VideoResNet80(embedding_dim=EMBEDDING_DIM).to(device)
-    arcface_layer = ArcFaceLayer(in_features=EMBEDDING_DIM, num_classes=num_classes).to(device)
-
-    # 1. Train the model to cluster well
-    train_arcface(model, arcface_layer, dataloader, epochs=EPOCHS, device=device)
-
-    # 2. Extract the features
-    dataloader_eval = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
-    embeddings, labels = extract_embeddings(model, dataloader_eval, device)
-
-    # 3. Visualize
-    plot_clusters(embeddings, labels, dataset.classes, output_path="video_cluster/cluster_output.png")
+    # Save as an interactive HTML file
+    fig.write_html(output_path)
+    print(f"Interactive cluster visualization saved to {output_path}")
