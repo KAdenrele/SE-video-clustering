@@ -11,7 +11,7 @@ from scripts.cluster_videos import (
     ArcFaceLayer, 
     train_arcface, 
     extract_embeddings, 
-    plot_clusters
+    plot_clusters_plotly
 )
 
 def main():
