@@ -2,6 +2,7 @@ import os
 import shutil
 from collections import defaultdict
 from datasets import load_dataset, DownloadConfig
+import os
 
 
 BASE_DIR = "/workspace/video_data"
@@ -88,7 +89,8 @@ def main():
             dataset_dict = load_dataset(
                 config["repo"], 
                 trust_remote_code=config["trust_remote"],
-                download_config=dl_config
+                download_config=dl_config,
+                token=os.environ.get("HF_TOKEN")
             )
         except Exception as e:
             print(f"Failed to load {ds_name} from Hugging Face: {e}")
