@@ -21,9 +21,10 @@ RUN uv pip install --system --no-cache \
     pandas \
     plotly
 
-    
+
 # Copy your script into the container
 COPY main.py .
+COPY scripts/ ./scripts/
 
 # Default command
 CMD ["python", "main.py"]
