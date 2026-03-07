@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 
 # Import from your modules
 from scripts.dataset_downloader import main as download_datasets
-from scripts.video_clustering import (
+from scripts.cluster_videos import (
     VideoDirectoryDataset, 
     VideoResNet101, 
     ArcFaceLayer, 
