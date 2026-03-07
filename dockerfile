@@ -12,15 +12,15 @@ RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Use uv to install Python packages quickly into the system Python
+# Pinned numpy<2.0.0 to prevent PyTorch C-API crashes
 RUN uv pip install --system --no-cache \
+    "numpy<2.0.0" \
     opencv-python-headless \
     scikit-learn \
     torchvision \
     datasets \
     pandas \
     plotly
-
 
 # Copy your script into the container
 COPY main.py .
