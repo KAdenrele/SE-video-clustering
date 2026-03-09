@@ -18,4 +18,10 @@ RUN uv pip install --system --no-cache .
 COPY main.py .
 COPY scripts/ ./scripts/
 
+
+# Declare mount points for data, output, and cache
+VOLUME /workspace/video_data
+VOLUME /workspace/video_cluster
+VOLUME /workspace/hf_cache
+
 CMD ["python", "main.py"]
