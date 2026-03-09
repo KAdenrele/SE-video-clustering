@@ -3,5 +3,18 @@ name = "video-clustering"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.10"
-dependencies = []
+requires-python = ">=3.10, <3.12"
+dependencies = [
+    "python-dotenv>=1.0.0",
+    "pillow>=12.1.1",
+    "datasets==3.6.0",
+    "numpy<2.0.0",
+    "torch>=2.2.0",
+    "torchvision>=0.17.0",
+    "scikit-learn>=1.4.0",
+    "pandas>=2.2.0",
+    "plotly>=5.19.0",
+    "opencv-python>=4.9.0",
+    "huggingface-hub>=0.20.3",
+    "av>=16.1.0",
+]

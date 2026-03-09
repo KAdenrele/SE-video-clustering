@@ -10,13 +10,12 @@ import torchvision.transforms as T
 from sklearn.manifold import TSNE
 import pandas as pd
 import plotly.express as px
+import logging
 
-# ==========================================
-# 1. DATASET & VIDEO PROCESSING
-# ==========================================
+
 class VideoDirectoryDataset(Dataset):
     """Loads videos from a directory where subfolders represent class labels."""
-    def __init__(self, root_dir, num_frames=70, transform=None):
+    def __init__(self, root_dir, num_frames=10, transform=None):
         self.root_dir = root_dir
         self.num_frames = num_frames
         self.transform = transform
@@ -64,7 +63,7 @@ class VideoDirectoryDataset(Dataset):
         return frames, label
 
 # ==========================================
-# 2. MODEL ARCHITECTURE
+# MODEL ARCHITECTURE
 # ==========================================
 class VideoResNet101(nn.Module):
     """Extracts features using ResNet-101 and averages them across frames."""
@@ -120,7 +119,7 @@ class ArcFaceLayer(nn.Module):
         return output
 
 # ==========================================
-# 3. TRAINING & EXTRACTION
+# TRAINING & EXTRACTION
 # ==========================================
 def train_arcface(model, arcface_layer, dataloader, epochs, device):
     """Trains the embedding model using ArcFace loss."""
@@ -132,7 +131,7 @@ def train_arcface(model, arcface_layer, dataloader, epochs, device):
         list(model.parameters()) + list(arcface_layer.parameters()), lr=1e-4
     )
 
-    print("Starting ArcFace Training...")
+    logging.info("Starting ArcFace Training")
     for epoch in range(epochs):
         total_loss = 0
         for frames, labels in dataloader:
@@ -147,7 +146,7 @@ def train_arcface(model, arcface_layer, dataloader, epochs, device):
             optimizer.step()
             
             total_loss += loss.item()
-        print(f"Epoch {epoch+1}/{epochs} | Loss: {total_loss/len(dataloader):.4f}")
+        logging.info(f"Epoch {epoch+1}/{epochs} | Loss: {total_loss/len(dataloader):.4f}")
 
 @torch.no_grad()
 def extract_embeddings(model, dataloader, device):
@@ -156,7 +155,7 @@ def extract_embeddings(model, dataloader, device):
     all_embeddings = []
     all_labels = []
     
-    print("Extracting final embeddings...")
+    logging.info("Extracting final embeddings")
     for frames, labels in dataloader:
         frames = frames.to(device)
         embeddings = model(frames)
@@ -166,11 +165,11 @@ def extract_embeddings(model, dataloader, device):
     return torch.cat(all_embeddings).numpy(), torch.cat(all_labels).numpy()
 
 # ==========================================
-# 4. VISUALIZATION (PLOTLY)
+# 4. VISUALISATION (PLOTLY)
 # ==========================================
 def plot_clusters_plotly(embeddings, labels, class_names, video_paths, output_path="clusters.html"):
     """Uses t-SNE to reduce embeddings to 2D and saves an interactive HTML plot."""
-    print("Running t-SNE reduction...")
+    logging.info("Running t-SNE reduction...")
     tsne = TSNE(n_components=2, random_state=42, perplexity=min(30, len(embeddings)-1))
     embeddings_2d = tsne.fit_transform(embeddings)
 
@@ -197,4 +196,4 @@ def plot_clusters_plotly(embeddings, labels, class_names, video_paths, output_pa
     
     # Save as an interactive HTML file
     fig.write_html(output_path)
-    print(f"Interactive cluster visualization saved to {output_path}")
+    logging.info(f"Interactive cluster visualization saved to {output_path}")
