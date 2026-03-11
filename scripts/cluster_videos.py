@@ -34,24 +34,39 @@ class VideoDirectoryDataset(Dataset):
         return len(self.videos)
 
     def extract_frames(self, video_path):
+        import numpy as np # Ensure numpy is imported for the padding!
         cap = cv2.VideoCapture(video_path)
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         frames = []
         
-        # Sample frames evenly
+        # Calculate the exact frame numbers we want to extract
         step = max(1, total_frames // self.num_frames)
-        for i in range(self.num_frames):
-            cap.set(cv2.CAP_PROP_POS_FRAMES, i * step)
+        target_indices = {i * step for i in range(self.num_frames)}
+        
+        current_frame = 0
+        while True:
             ret, frame = cap.read()
-            if ret:
+            
+            # Stop if the video ends or we've passed our highest target frame
+            if not ret or current_frame > max(target_indices, default=0):
+                break
+                
+            # If the current frame is one of our targets, save it
+            if current_frame in target_indices:
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 frames.append(frame)
-            else:
-                # Pad with zeros if video is too short
-                frames.append(torch.zeros((224, 224, 3)).numpy())
+                
+            current_frame += 1
+            
         cap.release()
-        return frames
-
+        
+        # Pad with black frames if the video was corrupted or too short
+        while len(frames) < self.num_frames:
+            #Used np.uint8 instead of default float32 to prevent TorchVision transform crashes
+            frames.append(np.zeros((224, 224, 3), dtype=np.uint8))
+            
+        return frames[:self.num_frames]
+    
     def __getitem__(self, idx):
         vid_path, label = self.videos[idx]
         frames = self.extract_frames(vid_path)
