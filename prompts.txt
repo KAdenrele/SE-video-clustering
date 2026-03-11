@@ -1,0 +1,56 @@
+#wan laughing prompts.
+Close-up or medium shot, realistic video of a person listening to someone off-screen in a cafe. The person suddenly bursts out laughing, mouth open, head tilting back slightly. High detail.
+Medium shot, realistic video of two friends sitting on a park bench. They look at each other and are visibly laughing together, shoulders shaking slightly. High detail.
+Close-up, realistic video of a young child's face during playtime outdoors. The child is visibly laughing heartily, eyes sparkling, maybe pointing at something funny. High detail.
+Medium shot, realistic video of a kookaburra perched on a branch in the Australian bush. The bird opens its beak and makes its characteristic 'laughing' call, head moving. High detail.
+Medium shot, realistic video capturing several audience members in a dimly lit comedy club. They are visibly laughing loudly in reaction to the comedian on stage (implied). High detail.
+Close-up, realistic video of The Joker's face (Heath Ledger or Joaquin Phoenix style) in a dark, gritty setting. The Joker is laughing maniacally, mouth wide, eyes intense. High detail.
+Medium shot, realistic video of a person sitting on a couch watching TV in a living room. The person is visibly laughing at something funny on the screen. High detail.
+Close-up, realistic video of a famous comedian (e.g., Eddie Murphy, Tina Fey) during an interview. They are visibly laughing genuinely at a comment, showing their characteristic laugh. High detail.
+Close-up, realistic video of a person in a slightly awkward social situation. The person is laughing, but the expression seems slightly forced or nervous. High detail.
+Close-up, realistic video of a baby sitting and reacting to someone off-screen. The baby breaks into uncontrollable giggles and laughter during a game of peek-a-boo. High detail.
+#wan_blockify effect prompts.
+Video showing a realistic person standing still. Their form begins to transform into discrete, interlocking Lego-style blocks. Smooth curves become jagged and blocky until the entire person is composed of colorful Lego bricks, resembling a minifigure. High detail.
+Video showing a realistic object (e.g., teapot) with smooth surfaces. It begins to transform into discrete, cube-like voxels. Smooth curves become jagged, blocky approximations until the entire object is rendered as a voxel construction. High detail.
+Video showing a realistic landscape view (hills, trees). The scene begins to transform into large, textured blocks like Minecraft. Smooth hills become jagged blocky terrain, trees become block constructions, until fully rendered in blocky game style. High detail.
+Video showing a realistic cat sitting. Its form begins to transform into discrete, colored square blocks resembling pixel art. Smooth fur becomes jagged blocky patches of color until the cat is rendered as a block-based pixel art sprite. High detail.
+Video showing a realistic car model. It begins to transform into discrete, interlocking toy blocks (like Lego but generic). Smooth curves become blocky approximations until the entire car is composed of primary colored blocks. High detail.
+Video showing a realistic person stepping through a digital portal effect. As they enter, their form begins to transform into discrete, glowing voxels or blocks, rendering them as a block-based digital avatar. High detail.
+Video showing a realistic piece of fruit (e.g., strawberry). It begins to transform into discrete, colored cubes/voxels. The recognizable shape becomes a jagged, blocky approximation composed of red and green blocks. High detail.
+Video styled like a game trailer intro. A famous actor portraying a character transforms, their realistic form breaking down into interlocking Lego bricks, becoming their official Lego minifigure version. High detail.
+Video showing realistic flowing water. The flowing liquid begins to transform into discrete, translucent blue cubes or voxels that tumble and flow like solid blocks instead of liquid. High detail.
+Video showing a realistic scene. It slowly begins to transform into small, discrete blocks. The blocks gradually become larger and more apparent until the entire scene is fully rendered as a block-based construction. High detail.
+#putting objects down
+Medium shot or close-up on hand, realistic video of a person holding a coffee cup near a table. The person carefully places the coffee cup down onto the table surface. High detail.
+Close-up on hand, realistic video of a shopper holding an item in a supermarket aisle. The shopper carefully places the item back down onto the shelf. High detail.
+Medium shot or close-up on hand, realistic video of a librarian holding a book near a bookshelf. The librarian carefully places the book down onto the shelf in its correct spot. High detail.
+Medium shot, realistic video of a cat holding a toy mouse in its mouth near its food bowl. The cat carefully places the toy mouse down onto the floor next to the bowl. High detail.
+Close-up on hand, realistic video of a construction worker holding a hammer near a toolbox at a construction site. The construction worker carefully places the hammer down into the toolbox. High detail.
+Close-up on hand, realistic video of a chef (like Remy from Ratatouille - implied) holding a kitchen knife above a cutting board in a kitchen. The chef carefully places the knife down onto the cutting board. High detail.
+Medium shot or close-up on hand, realistic video of a person holding a smartphone near a nightstand in a bedroom. The person carefully places the smartphone down onto the nightstand. High detail.
+Medium shot, realistic video of a robotic arm holding a delicate electronic component above a circuit board in a lab. The robotic arm carefully places the component down onto the circuit board. High detail.
+Close-up on hand, realistic video of a child holding a toy car near a toy box in a playroom. The child carefully places the toy car down into the toy box. High detail.
+Medium shot, realistic video of a gardener holding a watering can next to some potted plants in a garden. The gardener carefully places the watering can down onto the ground. High detail.
+#blinking
+Extreme close-up, realistic video focusing on the eyes of a woman applying mascara in front of a bathroom mirror. The woman's eyes blink normally a few times. High detail.
+Extreme close-up, realistic video focusing on the eyes of a tired student looking at a book in a dimly lit study room. The student's eyes blink normally a few times. High detail.
+Extreme close-up, realistic video focusing on the eyes of a newborn baby waking up in a soft crib. The baby's eyes blink normally a few times. High detail.
+Extreme close-up, realistic video focusing on the piercing green eyes of a black cat sitting in a sunbeam on a carpet. The cat's eyes blink normally, slowly, a few times. High detail.
+Extreme close-up, video focusing on the intricate camera-lens eyes of a humanoid robot in a futuristic laboratory. The robot's eye-lenses make a soft clicking sound as shutters blink normally a few times. High detail.
+Extreme close-up, realistic video focusing on the eyes of a person facing strong wind on a dramatic cliffside overlooking the sea. The person's eyes blink normally a few times against the wind. High detail.
+Extreme close-up, realistic video focusing on the large, round, yellow eyes of an owl perched on a branch in a dark forest. The owl's eyes blink normally a few times, nictitating membrane visible. High detail.
+Extreme close-up, realistic video focusing on the eyes of a person meditating peacefully in a tranquil zen garden setting. The person's eyes, perhaps slightly closed, blink normally and gently a few times. High detail.
+Extreme close-up, realistic video focusing on the intense blue eyes of Cillian Murphy during a dramatic film scene with chiaroscuro lighting. Cillian Murphy's eyes blink normally a few times. High detail.
+Extreme close-up, realistic video focusing on the eyes of a person slowly waking up in bed, morning light filtering in. The person's eyes blink normally a few times, adjusting to the light. High detail.
+#shatter effect
+Slow-motion video showing a baseball hitting a pane of glass. Cracks instantly radiate from the impact point, and the glass violently breaks apart into numerous small, sharp pieces that scatter outwards. High detail, cinematic.
+Video showing a ceramic vase falling towards a hard floor. Upon impact, cracks spread instantly across its surface, and it violently breaks apart into many ceramic fragments which scatter. High detail.
+Video showing a detailed ice sculpture. A high-frequency sound or invisible force hits it. Cracks instantly spiderweb across the ice, and it violently explodes outwards into countless glittering ice shards. High detail.
+Video styled for fantasy. A large floating crystal is hit by a magic spell. Cracks rapidly spread across its facets, and it violently shatters into numerous glowing shards that fly outwards. High detail.
+Surreal video showing a humanoid figure made of clear glass standing still. An impact occurs (e.g., hammer swing), cracks instantly cover the figure, and it violently shatters into countless glass fragments. High detail.
+Slow-motion video showing a smartphone falling face-down onto concrete. Upon impact, cracks rapidly spiderweb across the screen surface, originating from the impact corner, shattering the glass layer. High detail.
+Video showing an ancient stone statue in a ruin. Suddenly, cracks rapidly spread across its surface, and it violently crumbles and breaks apart into numerous stone pieces and dust. High detail.
+Video styled like an action movie. A famous actor playing an intense character punches a mirror. Cracks instantly radiate from the fist's impact, and the mirror glass violently shatters outwards. High detail.
+Video showing a piece of fruit frozen solid (from Freeze Effect prompt). The frozen fruit is dropped onto a hard surface, and upon impact, it violently shatters into many hard, icy fragments. High detail.
+Video showing an antique porcelain doll falling from a shelf. Upon hitting the floor, cracks instantly spread across its face and body, and it violently breaks apart into numerous white porcelain fragments. High detail.
+

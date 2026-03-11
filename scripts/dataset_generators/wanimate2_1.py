@@ -50,6 +50,15 @@ def download_dataset(repo, ds_name, split, dl_config):
     """Downloads a specified number of videos from a given Hugging Face repository."""
     logging.info(f"--- Processing Dataset: {ds_name} ({repo}) ---")
 
+    out_dir = os.path.join(BASE_DIR, OUTPUT_FOLDER_NAME)
+    os.makedirs(out_dir, exist_ok=True)
+
+    # Check if enough files for this dataset already exist
+    existing_files = [f for f in os.listdir(out_dir) if f.startswith(f"{ds_name}_") and f.endswith(".mp4")]
+    if len(existing_files) >= NUM_VIDEOS_TO_DOWNLOAD:
+        logging.info(f"  Skipping '{ds_name}': Found {len(existing_files)} files, meeting target of {NUM_VIDEOS_TO_DOWNLOAD}.")
+        return
+
     # 1. Load the dataset
     try:
         dataset = load_dataset(
@@ -65,9 +74,6 @@ def download_dataset(repo, ds_name, split, dl_config):
     except Exception as e:
         logging.error(f"Failed to load {ds_name} from Hugging Face: {e}")
         return
-
-    out_dir = os.path.join(BASE_DIR, OUTPUT_FOLDER_NAME)
-    os.makedirs(out_dir, exist_ok=True)
 
     download_count = 0
     for i, row in enumerate(dataset):

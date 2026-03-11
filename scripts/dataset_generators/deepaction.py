@@ -70,6 +70,7 @@ def download_deepaction(dl_config):
     logging.info(f"Using split: '{split}' ({len(dataset)} total items)")
 
     label_counts = defaultdict(int)
+    checked_dirs = set()
 
     # 2. Iterate through the dataset
     for row in dataset:
@@ -82,6 +83,13 @@ def download_deepaction(dl_config):
             target_label = "Real"
         else:
             target_label = model_name.replace("/", "_").replace(" ", "_")
+
+        # Pre-scan directory on first encounter of a label to count existing files
+        if target_label not in checked_dirs:
+            out_dir = os.path.join(BASE_DIR, target_label)
+            if os.path.isdir(out_dir):
+                label_counts[target_label] = len([f for f in os.listdir(out_dir) if f.endswith(('.mp4', '.avi', '.mov'))])
+            checked_dirs.add(target_label)
 
         # Skip if we already have enough videos for this class
         if label_counts.get(target_label, 0) >= VIDEOS_PER_LABEL:

@@ -148,6 +148,19 @@ def train_arcface(model, arcface_layer, dataloader, epochs, device):
             total_loss += loss.item()
         logging.info(f"Epoch {epoch+1}/{epochs} | Loss: {total_loss/len(dataloader):.4f}")
 
+    model_dir = os.environ.get("TORCH_HOME")
+    if model_dir:
+        os.makedirs(model_dir, exist_ok=True)
+        logging.info(f"Saving trained models to {model_dir}")
+
+        model_path = os.path.join(model_dir, "finetuned_video_resnet.pth")
+        torch.save(model.state_dict(), model_path)
+
+        arcface_path = os.path.join(model_dir, "finetuned_arcface_layer.pth")
+        torch.save(arcface_layer.state_dict(), arcface_path)
+    else:
+        logging.warning("TORCH_HOME environment variable not set. Trained models will not be saved.")
+
 @torch.no_grad()
 def extract_embeddings(model, dataloader, device):
     """Passes videos through the trained model to get final embeddings."""
@@ -165,7 +178,7 @@ def extract_embeddings(model, dataloader, device):
     return torch.cat(all_embeddings).numpy(), torch.cat(all_labels).numpy()
 
 # ==========================================
-# 4. VISUALISATION (PLOTLY)
+# VISUALISATION (PLOTLY)
 # ==========================================
 def plot_clusters_plotly(embeddings, labels, class_names, video_paths, output_path="clusters.html"):
     """Uses t-SNE to reduce embeddings to 2D and saves an interactive HTML plot."""

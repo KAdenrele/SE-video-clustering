@@ -2,8 +2,8 @@ import os
 import torch
 import torchvision.transforms as T
 from torch.utils.data import DataLoader
-from scripts.deepaction_dataset_downloader import main as download_deepaction_dataset
-from scripts.wan_2_1_dataset_download import main as download_wanimate_dataset
+from scripts.dataset_generators.deepaction import main as download_deepaction_dataset
+from scripts.dataset_generators.wanimate2_1 import main as download_wanimate_dataset
 from scripts.cluster_videos import (
     VideoDirectoryDataset, 
     VideoResNet101, 
@@ -16,9 +16,9 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def main():
-    logging.info("Downloading Datasets")
-    download_deepaction_dataset()
-    download_wanimate_dataset()
+    #logging.info("Downloading Datasets")
+    #download_deepaction_dataset()
+    #download_wanimate_dataset()
 
     DATA_DIR = "/workspace/video_data"
     EPOCHS = 10
