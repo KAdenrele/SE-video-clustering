@@ -1,5 +1,6 @@
 import os
 import math
+import numpy as np
 import cv2
 import torch
 import torch.nn as nn
@@ -34,7 +35,7 @@ class VideoDirectoryDataset(Dataset):
         return len(self.videos)
 
     def extract_frames(self, video_path):
-        import numpy as np # Ensure numpy is imported for the padding!
+         
         cap = cv2.VideoCapture(video_path)
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         frames = []
