@@ -68,7 +68,7 @@ def main():
         labels, 
         dataset.classes, 
         video_paths=video_paths,
-        output_path=os.path.join(output_dir, "cluster_output.html")
+        output_path=os.path.join(output_dir, "cluster_output.png")
     )
     logging.info("Pipeline Complete!")
 

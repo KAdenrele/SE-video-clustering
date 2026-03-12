@@ -9,9 +9,11 @@ from torch.utils.data import Dataset, DataLoader
 import torchvision.models as models
 import torchvision.transforms as T
 from sklearn.manifold import TSNE
+import matplotlib.pyplot as plt
+import seaborn as sns
 import pandas as pd
-import plotly.express as px
 import logging
+
 
 
 class VideoDirectoryDataset(Dataset):
@@ -196,33 +198,62 @@ def extract_embeddings(model, dataloader, device):
 # ==========================================
 # VISUALISATION (PLOTLY)
 # ==========================================
-def plot_clusters_plotly(embeddings, labels, class_names, video_paths, output_path="clusters.html"):
-    """Uses t-SNE to reduce embeddings to 2D and saves an interactive HTML plot."""
+def plot_clusters_seaborn(embeddings, labels, class_names, video_paths=None, output_path="clusters.png"):
+    """Uses t-SNE to reduce embeddings to 2D and saves a publication-ready static plot."""
     logging.info("Running t-SNE reduction...")
     tsne = TSNE(n_components=2, random_state=42, perplexity=min(30, len(embeddings)-1))
     embeddings_2d = tsne.fit_transform(embeddings)
 
-    # Map the numeric labels back to their actual string names (e.g., 'Sora', 'Real')
+    # Map the numeric labels back to their actual string names
     label_names = [class_names[lbl] for lbl in labels]
 
-    # Create a DataFrame for Plotly
+    # Create a DataFrame for Seaborn
     df = pd.DataFrame({
         't-SNE Component 1': embeddings_2d[:, 0],
         't-SNE Component 2': embeddings_2d[:, 1],
-        'Generator Model': label_names,
-        'Video Path': video_paths
+        'Generator Model': label_names
     })
 
-    # Generate the interactive scatter plot
-    fig = px.scatter(
-        df, 
+ 
+    # Set a clean, academic style
+    sns.set_theme(style="ticks", context="paper", font_scale=1.2)
+    
+    # Create the canvas (10x8 inches is a good standard size)
+    plt.figure(figsize=(10, 8))
+
+    # Generate the scatter plot
+    scatter = sns.scatterplot(
+        data=df, 
         x='t-SNE Component 1', 
         y='t-SNE Component 2', 
-        color='Generator Model',
-        hover_data=['Video Path'], # This adds the filepath to the tooltip
-        title="ArcFace Video Embeddings (t-SNE Projection)"
+        hue='Generator Model',
+        palette='deep',     # A professional, colorblind-friendly palette
+        s=80,               # Make the dots slightly larger
+        alpha=0.8,          # 80% opacity so overlapping dots create density
+        edgecolor='white',  # Crisp white borders around each dot
+        linewidth=0.5
     )
+
+    plt.title("ArcFace Video Embeddings (t-SNE Projection)", pad=20, fontsize=16, fontweight='bold')
+    plt.xlabel("t-SNE Component 1", fontweight='bold')
+    plt.ylabel("t-SNE Component 2", fontweight='bold')
+
+    plt.legend(
+        title="Generator Model", 
+        title_fontsize='13', 
+        fontsize='11', 
+        bbox_to_anchor=(1.05, 1), 
+        loc='upper left', 
+        frameon=False
+    )
+
+    # Remove the top and right box borders for a modern, clean look
+    sns.despine()
+
+    plt.tight_layout()
     
-    # Save as an interactive HTML file
-    fig.write_html(output_path)
-    logging.info(f"Interactive cluster visualization saved to {output_path}")
+    #300 DPI (Dots Per Inch) is the standard for print/PDFs
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.close() # Free up your system memory
+    
+    logging.info(f"Publication-ready cluster plot saved to {output_path}")
