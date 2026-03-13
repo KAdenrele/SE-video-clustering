@@ -1,24 +1,28 @@
 import os
 import torch
 import torchvision.transforms as T
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from scripts.dataset_generators.deepaction import main as download_deepaction_dataset
 from scripts.dataset_generators.wanimate2_1 import main as download_wanimate_dataset
 from scripts.cluster_videos import (
     VideoDirectoryDataset, 
-    VideoResNet101, 
+    VideoResNet, 
     ArcFaceLayer, 
-    train_arcface, 
-    extract_embeddings, 
-    plot_clusters
+    train_arcface,
+    extract_embeddings,
+    plot_clusters,
+    evaluate_with_knn_kfold,
+    evaluate_on_holdout_set,
+    save_evaluation_results
 )
+from sklearn.model_selection import train_test_split
 import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def main():
     logging.info("Downloading Datasets")
-    download_deepaction_dataset()
-    download_wanimate_dataset()
+    #download_deepaction_dataset()
+    #download_wanimate_dataset()
 
     DATA_DIR = "/workspace/video_data"
     EPOCHS = 10
@@ -38,37 +42,78 @@ def main():
     if len(dataset) == 0:
         raise ValueError(f"No videos found in {DATA_DIR}! Check your directory structure.")
         
-    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
     num_classes = len(dataset.classes)
-    logging.info(f"Found {len(dataset)} videos across {num_classes} classes.")
+    logging.info(f"Found {len(dataset)} total videos across {num_classes} classes.")
 
+    # Create a stratified train/test split of the dataset
+    all_labels = [info[1] for info in dataset.videos]
+    indices = list(range(len(dataset)))
+    train_indices, test_indices = train_test_split(
+        indices, 
+        test_size=0.2, 
+        random_state=42, 
+        stratify=all_labels
+    )
 
-    model = VideoResNet101(embedding_dim=EMBEDDING_DIM).to(device)
+    train_subset = Subset(dataset, train_indices)
+    test_subset = Subset(dataset, test_indices)
+    logging.info(f"Dataset split: {len(train_subset)} training samples, {len(test_subset)} testing samples.")
+
+    # Create DataLoaders for training and evaluation
+    train_loader = DataLoader(train_subset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
+
+    model = VideoResNet(embedding_dim=EMBEDDING_DIM).to(device)
     arcface_layer = ArcFaceLayer(in_features=EMBEDDING_DIM, num_classes=num_classes).to(device)
 
-    logging.info("Training ArcFace")
-    train_arcface(model, arcface_layer, dataloader, epochs=EPOCHS, device=device)
+    logging.info("Training ArcFace on the training set")
+    train_arcface(model, arcface_layer, train_loader, epochs=EPOCHS, device=device)
 
+    # Extract embeddings for both train and test sets for evaluation
+    logging.info("Extracting embeddings for training set...")
+    train_eval_loader = DataLoader(train_subset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
+    train_embeddings, train_labels = extract_embeddings(model, train_eval_loader, device)
 
-    logging.info("Extracting Embeddings")
-    dataloader_eval = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
-    embeddings, labels = extract_embeddings(model, dataloader_eval, device)
+    logging.info("Extracting embeddings for test set...")
+    test_loader = DataLoader(test_subset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
+    test_embeddings, test_labels = extract_embeddings(model, test_loader, device)
 
-
-    logging.info("Visualizing Clusters")
+    #Evaluation
     output_dir = "/workspace/video_cluster"
     os.makedirs(output_dir, exist_ok=True)
 
-    # Grab the video paths in the exact same order as the extracted embeddings
-    # We slice it to only show "Label/Video.mp4" so the hover box isn't cluttered
-    video_paths = [os.path.join(*vid_info[0].split(os.sep)[-2:]) for vid_info in dataset.videos]
+    #K-Fold CV on the training data to assess embedding space quality
+    kfold_report_df = evaluate_with_knn_kfold(
+        train_embeddings, 
+        train_labels, 
+        class_names=dataset.classes, 
+        n_splits=5, 
+        n_neighbors=7
+    )
+
+    #Evaluation on the holdout test set to assess generalization
+    holdout_report_df = evaluate_on_holdout_set(
+        train_embeddings, train_labels, 
+        test_embeddings, test_labels, 
+        class_names=dataset.classes, 
+        n_neighbors=7
+    )
+
+    #Save both reports to a single CSV file
+    save_evaluation_results(
+        kfold_report_df, 
+        holdout_report_df, 
+        output_path=os.path.join(output_dir, "evaluation_metrics.csv")
+    )
+
+    logging.info("Visualising Test Set Clusters")
+    test_video_paths = [os.path.join(*dataset.videos[i][0].split(os.sep)[-2:]) for i in test_indices]
     
     plot_clusters(
-        embeddings, 
-        labels, 
+        test_embeddings, 
+        test_labels, 
         dataset.classes, 
-        video_paths=video_paths,
-        output_path=os.path.join(output_dir, "cluster_output.png")
+        video_paths=test_video_paths,
+        output_path=os.path.join(output_dir, "test_set_cluster_plot.png")
     )
     logging.info("Pipeline Complete!")
 
