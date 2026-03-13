@@ -8,7 +8,7 @@ load_dotenv()
 
 BASE_DIR = "/workspace/video_data"
 HF_CACHE_DIR = "/workspace/hf_cache"
-NUM_VIDEOS_TO_DOWNLOAD = 50
+NUM_VIDEOS_TO_DOWNLOAD = 300
 OUTPUT_FOLDER_NAME = "wanimate2_1"
 
 

@@ -8,8 +8,7 @@ load_dotenv()
 
 BASE_DIR = "/workspace/video_data"
 HF_CACHE_DIR = "/workspace/hf_cache"
-VIDEOS_PER_LABEL = 50
-
+VIDEOS_PER_LABEL = 300
 
 # ==========================================
 # HELPER FUNCTIONS

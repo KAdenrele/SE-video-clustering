@@ -196,9 +196,9 @@ def extract_embeddings(model, dataloader, device):
     return torch.cat(all_embeddings).numpy(), torch.cat(all_labels).numpy()
 
 # ==========================================
-# VISUALISATION (PLOTLY)
+# VISUALISATION 
 # ==========================================
-def plot_clusters_seaborn(embeddings, labels, class_names, video_paths=None, output_path="clusters.png"):
+def plot_clusters(embeddings, labels, class_names, video_paths=None, output_path="clusters.png"):
     """Uses t-SNE to reduce embeddings to 2D and saves a publication-ready static plot."""
     logging.info("Running t-SNE reduction...")
     tsne = TSNE(n_components=2, random_state=42, perplexity=min(30, len(embeddings)-1))

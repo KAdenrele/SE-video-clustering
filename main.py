@@ -10,15 +10,15 @@ from scripts.cluster_videos import (
     ArcFaceLayer, 
     train_arcface, 
     extract_embeddings, 
-    plot_clusters_plotly
+    plot_clusters
 )
 import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def main():
-    #logging.info("Downloading Datasets")
-    #download_deepaction_dataset()
-    #download_wanimate_dataset()
+    logging.info("Downloading Datasets")
+    download_deepaction_dataset()
+    download_wanimate_dataset()
 
     DATA_DIR = "/workspace/video_data"
     EPOCHS = 10
@@ -63,7 +63,7 @@ def main():
     # We slice it to only show "Label/Video.mp4" so the hover box isn't cluttered
     video_paths = [os.path.join(*vid_info[0].split(os.sep)[-2:]) for vid_info in dataset.videos]
     
-    plot_clusters_plotly(
+    plot_clusters(
         embeddings, 
         labels, 
         dataset.classes, 
