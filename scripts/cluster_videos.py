@@ -12,7 +12,7 @@ from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-from sklearn.model_selection import KFold
+from sklearn.model_selection import StratifiedKFold
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import classification_report
 import logging
@@ -24,7 +24,7 @@ class VideoDirectoryDataset(Dataset):
         self.root_dir = root_dir
         self.num_frames = num_frames
         self.transform = transform
-        self.classes = sorted(os.listdir(root_dir))
+        self.classes = sorted([d for d in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, d))])
         self.class_to_idx = {cls_name: i for i, cls_name in enumerate(self.classes)}
         self.videos = []
         
@@ -192,6 +192,7 @@ def extract_embeddings(model, dataloader, device):
     for frames, labels in dataloader:
         frames = frames.to(device)
         embeddings = model(frames)
+        embeddings = F.normalize(embeddings, p=2, dim=1)
         all_embeddings.append(embeddings.cpu())
         all_labels.append(labels.cpu())
         
@@ -199,32 +200,37 @@ def extract_embeddings(model, dataloader, device):
 
 def evaluate_with_knn_kfold(embeddings, labels, class_names, n_splits=5, n_neighbors=7):
     """
-    Evaluates embedding quality using K-Fold CV with k-NN, returning detailed metrics.
-    
-    Args:
-        embeddings (np.ndarray): The extracted feature embeddings.
-        labels (np.ndarray): The corresponding ground-truth labels.
-        class_names (list): List of string names for the classes.
-        n_splits (int): The number of folds for cross-validation.
-        n_neighbors (int): The number of neighbors for the k-NN classifier.
+    Evaluates embedding quality using Stratified K-Fold CV with k-NN, 
+    ensuring all classes are proportionally represented in every fold.
     """
-    logging.info(f"Starting {n_splits}-Fold Cross-Validation with k-NN (k={n_neighbors})...")
+    logging.info(f"Starting {n_splits}-Fold Stratified Cross-Validation with k-NN (k={n_neighbors})...")
     
-    kf = KFold(n_splits=n_splits, shuffle=True, random_state=42)
+    # ---> THE FIX: Initialize StratifiedKFold <---
+    skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
     knn = KNeighborsClassifier(n_neighbors=n_neighbors, n_jobs=-1)
     
     fold_results = []
     
-    for fold, (train_index, test_index) in enumerate(kf.split(embeddings)):
+    # ---> THE FIX: Pass both embeddings AND labels into the split method <---
+    for fold, (train_index, test_index) in enumerate(skf.split(embeddings, labels)):
         X_train, X_test = embeddings[train_index], embeddings[test_index]
         y_train, y_test = labels[train_index], labels[test_index]
         
         knn.fit(X_train, y_train)
         y_pred = knn.predict(X_test)
 
-        report = classification_report(y_test, y_pred, target_names=class_names, output_dict=True, zero_division=0)
-        logging.info(f"  Fold {fold+1}/{n_splits} | Accuracy: {report['accuracy']:.4f}")
+        # We keep the labels parameter just to be perfectly safe, 
+        # but with StratifiedKFold, you shouldn't strictly need it anymore!
+        report = classification_report(
+            y_test, 
+            y_pred, 
+            labels=range(len(class_names)), 
+            target_names=class_names, 
+            output_dict=True, 
+            zero_division=0
+        )
         
+        logging.info(f"  Fold {fold+1}/{n_splits} | Accuracy: {report['accuracy']:.4f}")
         fold_results.append(report)
         
     # Average the metrics across all folds
@@ -247,8 +253,8 @@ def evaluate_with_knn_kfold(embeddings, labels, class_names, n_splits=5, n_neigh
     
     report_df = pd.DataFrame(avg_report).T
     
-    logging.info("K-Fold Cross-Validation Complete. Average Metrics:")
-    print("\n--- K-Fold Cross-Validation Mean Results ---")
+    logging.info("Stratified K-Fold Cross-Validation Complete. Average Metrics:")
+    print("\n--- Stratified K-Fold Cross-Validation Mean Results ---")
     print(report_df.to_string())
     print("-" * 50)
     
@@ -262,8 +268,21 @@ def evaluate_on_holdout_set(train_embeddings, train_labels, test_embeddings, tes
     knn.fit(train_embeddings, train_labels)
     y_pred = knn.predict(test_embeddings)
     
-    report_str = classification_report(test_labels, y_pred, target_names=class_names, zero_division=0)
-    report_dict = classification_report(test_labels, y_pred, target_names=class_names, output_dict=True, zero_division=0)
+    report_str = classification_report(
+        test_labels, 
+        y_pred, 
+        labels=range(len(class_names)), # <-- Added this
+        target_names=class_names, 
+        zero_division=0
+    )
+    report_dict = classification_report(
+        test_labels, 
+        y_pred, 
+        labels=range(len(class_names)), # <-- Added this
+        target_names=class_names, 
+        output_dict=True, 
+        zero_division=0
+    )
     
     logging.info("Holdout Set Evaluation Complete.")
     print("\n--- Holdout Test Set Results ---")
