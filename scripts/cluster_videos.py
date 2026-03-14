@@ -86,16 +86,26 @@ class VideoDirectoryDataset(Dataset):
 # MODEL ARCHITECTURE
 # ==========================================
 class VideoResNet(nn.Module):
-    """Extracts features using ResNet-50 and averages them across frames."""
+    """Extracts features using ResNet-18 with Dropout and Frozen Layers to prevent overfitting."""
     def __init__(self, embedding_dim=512):
         super().__init__()
-        weights = models.ResNet50_Weights.DEFAULT
-        resnet = models.resnet50(weights=weights)
+        weights = models.ResNet18_Weights.DEFAULT
+        resnet = models.resnet18(weights=weights)
+        
+        #Freeze the early layers (Layer 1 and Layer 2)
+        # This preserves basic edge/texture detection and reduces trainable parameters
+        for param in resnet.conv1.parameters(): param.requires_grad = False
+        for param in resnet.bn1.parameters(): param.requires_grad = False
+        for param in resnet.layer1.parameters(): param.requires_grad = False
+        for param in resnet.layer2.parameters(): param.requires_grad = False
         
         # Remove the final classification layer
         self.backbone = nn.Sequential(*list(resnet.children())[:-1])
-        # Project 2048-dim ResNet features to desired embedding space
-        self.projector = nn.Linear(2048, embedding_dim)
+        
+        # Step 3: Add Dropout before projection
+        # ResNet-18 outputs 512 dimensions
+        self.dropout = nn.Dropout(p=0.5)
+        self.projector = nn.Linear(512, embedding_dim)
         
     def forward(self, x):
         # x shape: (Batch, Frames, Channels, Height, Width)
@@ -103,41 +113,17 @@ class VideoResNet(nn.Module):
         x = x.view(B * T, C, H, W)
         
         # Extract features per frame
-        features = self.backbone(x) # (B*T, 2048, 1, 1)
-        features = features.view(B, T, -1) # (B, T, 2048)
+        features = self.backbone(x) # (B*T, 512, 1, 1)
+        features = features.view(B, T, -1) # (B, T, 512)
         
         # Average across the temporal dimension (frames)
         video_features = features.mean(dim=1) 
+        
+        # Apply Dropout and Project
+        video_features = self.dropout(video_features)
         embeddings = self.projector(video_features)
         
         return embeddings
-
-class ArcFaceLayer(nn.Module):
-    """ArcFace Margin layer for discriminative training."""
-    def __init__(self, in_features, num_classes, s=20.0, m=0.30):
-        super().__init__()
-        self.s = s
-        self.m = m
-        self.weight = nn.Parameter(torch.FloatTensor(num_classes, in_features))
-        nn.init.xavier_uniform_(self.weight)
-
-    def forward(self, embeddings, labels):
-        # Normalize features and weights
-        cosine = F.linear(F.normalize(embeddings), F.normalize(self.weight))
-        sine = torch.sqrt(1.0 - torch.pow(cosine, 2).clamp(0, 1))
-        
-        # Add margin: cos(theta + m) = cos(theta)cos(m) - sin(theta)sin(m)
-        phi = cosine * math.cos(self.m) - sine * math.sin(self.m)
-        
-        # Create one-hot mask
-        one_hot = torch.zeros(cosine.size(), device=embeddings.device)
-        one_hot.scatter_(1, labels.view(-1, 1).long(), 1)
-        
-        # Apply margin only to ground-truth classes
-        output = (one_hot * phi) + ((1.0 - one_hot) * cosine)
-        output *= self.s
-        return output
-
 # ==========================================
 # TRAINING & EXTRACTION
 # ==========================================
@@ -205,13 +191,11 @@ def evaluate_with_knn_kfold(embeddings, labels, class_names, n_splits=5, n_neigh
     """
     logging.info(f"Starting {n_splits}-Fold Stratified Cross-Validation with k-NN (k={n_neighbors})...")
     
-    # ---> THE FIX: Initialize StratifiedKFold <---
     skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
     knn = KNeighborsClassifier(n_neighbors=n_neighbors, n_jobs=-1)
     
     fold_results = []
     
-    # ---> THE FIX: Pass both embeddings AND labels into the split method <---
     for fold, (train_index, test_index) in enumerate(skf.split(embeddings, labels)):
         X_train, X_test = embeddings[train_index], embeddings[test_index]
         y_train, y_test = labels[train_index], labels[test_index]
@@ -219,8 +203,6 @@ def evaluate_with_knn_kfold(embeddings, labels, class_names, n_splits=5, n_neigh
         knn.fit(X_train, y_train)
         y_pred = knn.predict(X_test)
 
-        # We keep the labels parameter just to be perfectly safe, 
-        # but with StratifiedKFold, you shouldn't strictly need it anymore!
         report = classification_report(
             y_test, 
             y_pred, 
