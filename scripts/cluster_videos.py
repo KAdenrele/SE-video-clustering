@@ -124,6 +124,31 @@ class VideoResNet(nn.Module):
         embeddings = self.projector(video_features)
         
         return embeddings
+class ArcFaceLayer(nn.Module):
+    """ArcFace Margin layer for discriminative training."""
+    def __init__(self, in_features, num_classes, s=20.0, m=0.30):
+        super().__init__()
+        self.s = s
+        self.m = m
+        self.weight = nn.Parameter(torch.FloatTensor(num_classes, in_features))
+        nn.init.xavier_uniform_(self.weight)
+
+    def forward(self, embeddings, labels):
+        # Normalize features and weights
+        cosine = F.linear(F.normalize(embeddings), F.normalize(self.weight))
+        sine = torch.sqrt(1.0 - torch.pow(cosine, 2).clamp(0, 1))
+        
+        # Add margin: cos(theta + m) = cos(theta)cos(m) - sin(theta)sin(m)
+        phi = cosine * math.cos(self.m) - sine * math.sin(self.m)
+        
+        # Create one-hot mask
+        one_hot = torch.zeros(cosine.size(), device=embeddings.device)
+        one_hot.scatter_(1, labels.view(-1, 1).long(), 1)
+        
+        # Apply margin only to ground-truth classes
+        output = (one_hot * phi) + ((1.0 - one_hot) * cosine)
+        output *= self.s
+        return output
 # ==========================================
 # TRAINING & EXTRACTION
 # ==========================================
