@@ -124,6 +124,7 @@ class VideoResNet(nn.Module):
         embeddings = self.projector(video_features)
         
         return embeddings
+    
 class ArcFaceLayer(nn.Module):
     """ArcFace Margin layer for discriminative training."""
     def __init__(self, in_features, num_classes, s=20.0, m=0.30):
@@ -149,6 +150,7 @@ class ArcFaceLayer(nn.Module):
         output = (one_hot * phi) + ((1.0 - one_hot) * cosine)
         output *= self.s
         return output
+    
 # ==========================================
 # TRAINING & EXTRACTION
 # ==========================================

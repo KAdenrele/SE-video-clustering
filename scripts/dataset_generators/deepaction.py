@@ -20,25 +20,25 @@ def extract_video_to_disk(video_obj, save_path):
         return True # File already exists, skip downloading
         
     try:
-        # Format 1: HF Dictionary with raw bytes
         if isinstance(video_obj, dict) and "bytes" in video_obj and video_obj["bytes"]:
             with open(save_path, "wb") as f:
                 f.write(video_obj["bytes"])
             return True
             
-        # Format 2: HF Dictionary with a local cached path
         elif isinstance(video_obj, dict) and "path" in video_obj and os.path.exists(video_obj["path"]):
             shutil.copy(video_obj["path"], save_path)
             return True
             
-        # Format 3: Direct string path to a cached file
         elif isinstance(video_obj, str) and os.path.exists(video_obj):
             shutil.copy(video_obj, save_path)
             return True
             
     except Exception as e:
-        logging.error(f"  [!] Failed to save video: {e}")
+        logging.error(f"  [!] Exception while saving video: {e}")
+        return False
         
+    # If we reach here, the HF cache path is broken or missing
+    logging.debug(f"  [!] Skipped row: Video file missing from HF cache.")
     return False
 
 def download_deepaction(dl_config):
@@ -48,30 +48,30 @@ def download_deepaction(dl_config):
     
     logging.info(f"--- Processing Dataset: {ds_name} ---")
     
-    # 1. Load the ENTIRE dataset dictionary (all splits)
     try:
         dataset_dict = load_dataset(
             repo, 
             trust_remote_code=True,
             download_config=dl_config,
             token=os.environ.get("HF_TOKEN"),
-            cache_dir=HF_CACHE_DIR
+            cache_dir=HF_CACHE_DIR,
+            #Force HF to re-download and fix the broken cache
+            download_mode="force_redownload" 
         )
     except Exception as e:
         logging.error(f"Failed to load {ds_name} from Hugging Face: {e}")
         return
 
     label_counts = defaultdict(int)
+    initial_counts = defaultdict(int) # Tracks how many we started with to prevent duplicates
+    rows_seen = defaultdict(int)      # Tracks our position in the dataset
     checked_dirs = set()
-
 
     for split_name, dataset_split in dataset_dict.items():
         logging.info(f"Scanning split: '{split_name}' ({len(dataset_split)} items)")
         
-        # Tell Hugging Face NOT to open the video files for this split
         dataset_split = dataset_split.cast_column("video", Video(decode=False))
 
-        #Iterate through the rows in this specific split
         for row in dataset_split:
             label_id = row['label']
             model_name = dataset_split.features['label'].int2str(label_id)
@@ -84,11 +84,20 @@ def download_deepaction(dl_config):
             if target_label not in checked_dirs:
                 out_dir = os.path.join(BASE_DIR, target_label)
                 if os.path.isdir(out_dir):
-                    label_counts[target_label] = len([f for f in os.listdir(out_dir) if f.endswith(('.mp4', '.avi', '.mov'))])
+                    existing = len([f for f in os.listdir(out_dir) if f.endswith(('.mp4', '.avi', '.mov'))])
+                    label_counts[target_label] = existing
+                    initial_counts[target_label] = existing
                 checked_dirs.add(target_label)
 
-            # Check if we hit the cap
+            # Track that we are looking at a new row for this class
+            rows_seen[target_label] += 1
+
+            # Check if we hit the total cap (400)
             if label_counts.get(target_label, 0) >= VIDEOS_PER_LABEL:
+                continue
+
+            # Skip rows that were already downloaded in previous runs
+            if rows_seen[target_label] <= initial_counts.get(target_label, 0):
                 continue
 
             out_dir = os.path.join(BASE_DIR, target_label)
@@ -103,7 +112,7 @@ def download_deepaction(dl_config):
 
             if extract_video_to_disk(video_obj, save_path):
                 label_counts[target_label] += 1
-                if label_counts[target_label] % 50 == 0 or VIDEOS_PER_LABEL < 10:
+                if label_counts[target_label] % 10 == 0: # Log every 10 for better visibility
                     logging.info(f"  Downloaded {label_counts[target_label]}/{VIDEOS_PER_LABEL} for [{target_label}]")
 
     logging.info(f"Finished {ds_name}. Final counts:")
@@ -114,7 +123,6 @@ def download_deepaction(dl_config):
 # MAIN ORCHESTRATION
 # ==========================================
 def main():
-    """Sets up logging and orchestrates the download."""
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     dl_config = DownloadConfig(num_proc=4)
     download_deepaction(dl_config)
