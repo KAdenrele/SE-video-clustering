@@ -98,7 +98,26 @@ def main():
         "wan_blinking": "linoyts/wan_blinking",
         "wan_shatter_effect": "linoyts/wan_shatter_effect",
         "wan_laughing": "linoyts/wan_laughing",
-        "skyreelsv2": "simwalo/Wan2.1_SkyreelsV2"
+        "wan_putting_on_hat": "linoyts/wan_putting_on_hat",
+        "wan_blowing_bubble_with_gum": "linoyts/wan_blowing_bubble_with_gum",
+        "wan_scrolling_on_phone": "linoyts/wan_scrolling_on_phone",
+        "wan_shrugging": "linoyts/wan_shrugging",
+        "wan_shuffling_cards": "linoyts/wan_shuffling_cards",
+        "wan_shaking_head": "linoyts/wan_shaking_head",
+        "wan_buttoning_shirt": "linoyts/wan_buttoning_shirt",
+        "wan_blowing_out_candle": "linoyts/wan_blowing_out_candle",
+        "wan_popping_balloon": "linoyts/wan_popping_balloon",
+        "wan_raising_eyebrows": "linoyts/wan_raising_eyebrows",
+        "wan_licking_lips": "linoyts/wan_licking_lips",
+        "wan_saluting": "linoyts/wan_saluting",
+        "wan_bouncing_ball": "linoyts/wan_bouncing_ball",
+        "wan_pouring_liquid": "linoyts/wan_pouring_liquid",
+        "wan_crumble_disintegrate_effect": "linoyts/wan_crumble_disintegrate_effect",
+        "wan_closing_umbrella": "linoyts/wan_closing_umbrella",
+        "wan_showing_muscles": "linoyts/wan_showing_muscles",
+        "wan_doing_single_squat": "linoyts/wan_doing_single_squat",
+        "wan_rolling_eyes": "linoyts/wan_rolling_eyes",
+        "wan_clapping_hands": "linoyts/wan_clapping_hands"
     }
 
     # Pass the whole dictionary at once so the folder capacity is tracked accurately
