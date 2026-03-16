@@ -1,4 +1,4 @@
-docker build -t video_clustering . && docker run --rm -it \
+docker build -t video_clustering . && docker run -it \
                                                   --name video-clustering-container \
                                                   --gpus "device=0" \
                                                   --shm-size=8g \
