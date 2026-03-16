@@ -19,7 +19,7 @@ import logging
 
 class VideoDirectoryDataset(Dataset):
     """Loads videos from a directory where subfolders represent class labels."""
-    def __init__(self, root_dir, num_frames=10, transform=None):
+    def __init__(self, root_dir, num_frames=16, transform=None):
         self.root_dir = root_dir
         self.num_frames = num_frames
         self.transform = transform
@@ -145,7 +145,7 @@ class VideoResNet3D(nn.Module):
         self.projector = nn.Linear(512, embedding_dim)
         
     def forward(self, x):
-        # IMPORTANT DATALOADER FIX:
+
         #Dataset outputs shape: (Batch, Frames, Channels, Height, Width)
         # 3D ResNet STRICTLY expects: (Batch, Channels, Frames, Height, Width)
         B, T, C, H, W = x.shape
@@ -272,9 +272,7 @@ def evaluate_on_holdout_set(train_embeddings, train_labels, test_embeddings, tes
     )
     
     logging.info("Holdout Set Evaluation Complete.")
-    print("\n--- Holdout Test Set Results ---")
     print(report_str)
-    print("-" * 50)
     
     return pd.DataFrame(report_dict).T
 
