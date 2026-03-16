@@ -12,7 +12,6 @@ from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-from sklearn.model_selection import StratifiedKFold
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import classification_report
 import logging
@@ -211,64 +210,6 @@ def extract_embeddings(model, dataloader, device):
         
     return torch.cat(all_embeddings).numpy(), torch.cat(all_labels).numpy()
 
-def evaluate_with_knn_kfold(embeddings, labels, class_names, n_splits=5, n_neighbors=7):
-    """
-    Evaluates embedding quality using Stratified K-Fold CV with k-NN, 
-    ensuring all classes are proportionally represented in every fold.
-    """
-    logging.info(f"Starting {n_splits}-Fold Stratified Cross-Validation with k-NN (k={n_neighbors})...")
-    
-    skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
-    knn = KNeighborsClassifier(n_neighbors=n_neighbors, n_jobs=-1)
-    
-    fold_results = []
-    
-    for fold, (train_index, test_index) in enumerate(skf.split(embeddings, labels)):
-        X_train, X_test = embeddings[train_index], embeddings[test_index]
-        y_train, y_test = labels[train_index], labels[test_index]
-        
-        knn.fit(X_train, y_train)
-        y_pred = knn.predict(X_test)
-
-        report = classification_report(
-            y_test, 
-            y_pred, 
-            labels=range(len(class_names)), 
-            target_names=class_names, 
-            output_dict=True, 
-            zero_division=0
-        )
-        
-        logging.info(f"  Fold {fold+1}/{n_splits} | Accuracy: {report['accuracy']:.4f}")
-        fold_results.append(report)
-        
-    # Average the metrics across all folds
-    avg_report = {}
-    for label in class_names:
-        avg_report[label] = {
-            'precision': np.mean([fr[label]['precision'] for fr in fold_results if label in fr]),
-            'recall': np.mean([fr[label]['recall'] for fr in fold_results if label in fr]),
-            'f1-score': np.mean([fr[label]['f1-score'] for fr in fold_results if label in fr]),
-            'support': np.mean([fr[label]['support'] for fr in fold_results if label in fr])
-        }
-    
-    avg_report['accuracy'] = np.mean([fr['accuracy'] for fr in fold_results])
-    for avg_type in ['macro avg', 'weighted avg']:
-        avg_report[avg_type] = {
-            'precision': np.mean([fr[avg_type]['precision'] for fr in fold_results]),
-            'recall': np.mean([fr[avg_type]['recall'] for fr in fold_results]),
-            'f1-score': np.mean([fr[avg_type]['f1-score'] for fr in fold_results]),
-        }
-    
-    report_df = pd.DataFrame(avg_report).T
-    
-    logging.info("Stratified K-Fold Cross-Validation Complete. Average Metrics:")
-    print("\n--- Stratified K-Fold Cross-Validation Mean Results ---")
-    print(report_df.to_string())
-    print("-" * 50)
-    
-    return report_df
-
 def evaluate_on_holdout_set(train_embeddings, train_labels, test_embeddings, test_labels, class_names, n_neighbors=7):
     """Trains a k-NN on the training set and evaluates its performance on a holdout test set."""
     logging.info(f"Evaluating on Holdout Test Set with k-NN (k={n_neighbors})...")
@@ -300,12 +241,10 @@ def evaluate_on_holdout_set(train_embeddings, train_labels, test_embeddings, tes
     
     return pd.DataFrame(report_dict).T
 
-def save_evaluation_results(kfold_df, holdout_df, output_path):
-    """Saves the K-Fold and Holdout evaluation DataFrames to a single CSV file."""
+def save_evaluation_results(holdout_df, output_path):
+    """Saves holdout evaluation DataFrames to a single CSV file."""
     try:
         with open(output_path, 'w') as f:
-            f.write("K-Fold Cross-Validation Mean Results\n")
-            kfold_df.to_csv(f)
             f.write("\n\nHoldout Test Set Results\n")
             holdout_df.to_csv(f)
         logging.info(f"Evaluation results saved to {output_path}")

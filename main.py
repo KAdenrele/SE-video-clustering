@@ -11,7 +11,6 @@ from scripts.cluster_videos import (
     train_arcface,
     extract_embeddings,
     plot_clusters,
-    evaluate_with_knn_kfold,
     evaluate_on_holdout_set,
     save_evaluation_results
 )
@@ -81,15 +80,6 @@ def main():
     output_dir = "/workspace/video_cluster"
     os.makedirs(output_dir, exist_ok=True)
 
-    #K-Fold CV on the training data to assess embedding space quality
-    kfold_report_df = evaluate_with_knn_kfold(
-        train_embeddings, 
-        train_labels, 
-        class_names=dataset.classes, 
-        n_splits=5, 
-        n_neighbors=7
-    )
-
     #Evaluation on the holdout test set to assess generalization
     holdout_report_df = evaluate_on_holdout_set(
         train_embeddings, train_labels, 
@@ -98,9 +88,8 @@ def main():
         n_neighbors=7
     )
 
-    #Save both reports to a single CSV file
+    #Save holdout report to a CSV file
     save_evaluation_results(
-        kfold_report_df, 
         holdout_report_df, 
         output_path=os.path.join(output_dir, "evaluation_metrics.csv")
     )
