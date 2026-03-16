@@ -20,7 +20,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 def main():
     logging.info("Downloading Datasets")
-    # download_deepaction_dataset()
+    download_deepaction_dataset()
     # download_wanimate_dataset()
 
     DATA_DIR = "/workspace/video_data"
