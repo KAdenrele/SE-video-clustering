@@ -4,6 +4,7 @@ import torchvision.transforms as T
 from torch.utils.data import DataLoader, Subset
 from scripts.dataset_generators.deepaction import main as download_deepaction_dataset
 from scripts.dataset_generators.wanimate2_1 import main as download_wanimate_dataset
+from scripts.dataset_generators.k400 import download_real_k400_videos
 from scripts.cluster_videos import (
     VideoDirectoryDataset, 
     VideoResNet, 
@@ -21,7 +22,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 def main():
     logging.info("Downloading Datasets")
     #download_deepaction_dataset()
-    download_wanimate_dataset()
+    #download_wanimate_dataset()
+    download_real_k400_videos(target_count=300)
 
     DATA_DIR = "/workspace/video_data"
     EPOCHS = 10

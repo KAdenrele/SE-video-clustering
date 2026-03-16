@@ -101,7 +101,7 @@ class VideoResNet(nn.Module):
         # Remove the final classification layer
         self.backbone = nn.Sequential(*list(resnet.children())[:-1])
         
-        # Step 3: Add Dropout before projection
+        #Add Dropout before projection
         # ResNet-18 outputs 512 dimensions
         self.dropout = nn.Dropout(p=0.5)
         self.projector = nn.Linear(512, embedding_dim)
