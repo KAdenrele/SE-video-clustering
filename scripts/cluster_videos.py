@@ -124,6 +124,45 @@ class VideoResNet(nn.Module):
         
         return embeddings
     
+class VideoResNet3D(nn.Module):
+    """Extracts spatial-temporal features using a 3D ResNet-18."""
+    def __init__(self, embedding_dim=512):
+        super().__init__()
+        # Load pre-trained 3D ResNet-18 (Trained on Kinetics-400 video data!)
+        weights = models.video.R3D_18_Weights.DEFAULT
+        resnet3d = models.video.r3d_18(weights=weights)
+        
+        # Freeze early layers to prevent overfitting
+        for param in resnet3d.stem.parameters(): param.requires_grad = False
+        for param in resnet3d.layer1.parameters(): param.requires_grad = False
+        for param in resnet3d.layer2.parameters(): param.requires_grad = False
+        
+        # Remove the final fully connected classification layer
+        self.backbone = nn.Sequential(*list(resnet3d.children())[:-1])
+        
+        # Add Dropout before projection
+        self.dropout = nn.Dropout(p=0.5)
+        self.projector = nn.Linear(512, embedding_dim)
+        
+    def forward(self, x):
+        # IMPORTANT DATALOADER FIX:
+        #Dataset outputs shape: (Batch, Frames, Channels, Height, Width)
+        # 3D ResNet STRICTLY expects: (Batch, Channels, Frames, Height, Width)
+        B, T, C, H, W = x.shape
+        x = x.permute(0, 2, 1, 3, 4)
+        
+        # Extract 3D features (Output shape: B, 512, 1, 1, 1)
+        features = self.backbone(x) 
+        
+        # Flatten the temporal/spatial dimensions down to just (B, 512)
+        video_features = features.view(B, -1) 
+        
+        # Apply Dropout and Project to ArcFace embedding space
+        video_features = self.dropout(video_features)
+        embeddings = self.projector(video_features)
+        
+        return embeddings
+    
 class ArcFaceLayer(nn.Module):
     """ArcFace Margin layer for discriminative training."""
     def __init__(self, in_features, num_classes, s=20.0, m=0.30):
@@ -153,7 +192,7 @@ class ArcFaceLayer(nn.Module):
 # ==========================================
 # TRAINING & EXTRACTION
 # ==========================================
-def train_arcface(model, arcface_layer, dataloader, epochs, device):
+def train_arcface(model, arcface_layer, dataloader, epochs, device, save_prefix="2d_model"):
     """Trains the embedding model using ArcFace loss."""
     model.train()
     arcface_layer.train()
@@ -163,7 +202,7 @@ def train_arcface(model, arcface_layer, dataloader, epochs, device):
         list(model.parameters()) + list(arcface_layer.parameters()), lr=1e-4
     )
 
-    logging.info("Starting ArcFace Training")
+    logging.info(f"Starting ArcFace Training for {save_prefix}")
     for epoch in range(epochs):
         total_loss = 0
         for frames, labels in dataloader:
@@ -180,18 +219,16 @@ def train_arcface(model, arcface_layer, dataloader, epochs, device):
             total_loss += loss.item()
         logging.info(f"Epoch {epoch+1}/{epochs} | Loss: {total_loss/len(dataloader):.4f}")
 
-    model_dir = os.environ.get("TORCH_HOME")
-    if model_dir:
-        os.makedirs(model_dir, exist_ok=True)
-        logging.info(f"Saving trained models to {model_dir}")
+    model_dir = os.environ.get("TORCH_HOME", "./")
+    os.makedirs(model_dir, exist_ok=True)
+    logging.info(f"Saving trained models to {model_dir}")
 
-        model_path = os.path.join(model_dir, "finetuned_video_resnet.pth")
-        torch.save(model.state_dict(), model_path)
+  
+    model_path = os.path.join(model_dir, f"{save_prefix}_resnet.pth")
+    torch.save(model.state_dict(), model_path)
 
-        arcface_path = os.path.join(model_dir, "finetuned_arcface_layer.pth")
-        torch.save(arcface_layer.state_dict(), arcface_path)
-    else:
-        logging.warning("TORCH_HOME environment variable not set. Trained models will not be saved.")
+    arcface_path = os.path.join(model_dir, f"{save_prefix}_arcface.pth")
+    torch.save(arcface_layer.state_dict(), arcface_path)
 
 @torch.no_grad()
 def extract_embeddings(model, dataloader, device):
