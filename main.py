@@ -86,7 +86,7 @@ def main():
         train_embeddings, 
         train_labels, 
         class_names=dataset.classes, 
-        n_splits=3, 
+        n_splits=5, 
         n_neighbors=7
     )
 
