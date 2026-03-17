@@ -22,7 +22,7 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def main():
-    logging.info("Downloading Datasets (Skipped for training run)")
+    logging.info("Downloading Datasets")
     # download_deepaction_dataset()
     # download_wanimate_dataset()
     # download_real_k400_videos(target_count=300)

@@ -128,7 +128,7 @@ class VideoResNet3D(nn.Module):
     """Extracts spatial-temporal features using a 3D ResNet-18."""
     def __init__(self, embedding_dim=512):
         super().__init__()
-        # Load pre-trained 3D ResNet-18 (Trained on Kinetics-400 video data!)
+        # Load pre-trained 3D ResNet-18 
         weights = models.video.R3D_18_Weights.DEFAULT
         resnet3d = models.video.r3d_18(weights=weights)
         
@@ -258,14 +258,14 @@ def evaluate_on_holdout_set(train_embeddings, train_labels, test_embeddings, tes
     report_str = classification_report(
         test_labels, 
         y_pred, 
-        labels=range(len(class_names)), # <-- Added this
+        labels=range(len(class_names)), 
         target_names=class_names, 
         zero_division=0
     )
     report_dict = classification_report(
         test_labels, 
         y_pred, 
-        labels=range(len(class_names)), # <-- Added this
+        labels=range(len(class_names)),
         target_names=class_names, 
         output_dict=True, 
         zero_division=0
@@ -325,9 +325,9 @@ def plot_clusters(embeddings, labels, class_names, video_paths=None, output_path
         linewidth=0.5
     )
 
-    plt.title("ArcFace Video Embeddings (t-SNE Projection)", pad=20, fontsize=16, fontweight='bold')
-    plt.xlabel("t-SNE Component 1", fontweight='bold')
-    plt.ylabel("t-SNE Component 2", fontweight='bold')
+    plt.title("ArcFace Video Embeddings (t-SNE Projection)", pad=20, fontsize=14,)
+    plt.xlabel("t-SNE Component 1")
+    plt.ylabel("t-SNE Component 2")
 
     plt.legend(
         title="Generator Model", 
@@ -338,7 +338,7 @@ def plot_clusters(embeddings, labels, class_names, video_paths=None, output_path
         frameon=False
     )
 
-    # Remove the top and right box borders for a modern, clean look
+ 
     sns.despine()
 
     plt.tight_layout()
