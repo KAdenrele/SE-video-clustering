@@ -6,11 +6,23 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /workspace
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Dependencies for OpenCV and other graphics/compute libraries
     libgl1-mesa-glx \
     libglib2.0-0 \
-    ffmpeg \
-    && rm -rf /var/lib/apt/lists/* 
+    libsm6 \
+    libxext6 \
+    libgomp1 \
+    # Utilities to download the static ffmpeg build
+    wget \
+    xz-utils \
+    && rm -rf /var/lib/apt/lists/* \
+    # Download and install a full-featured static ffmpeg build that includes libx264
+    && FFMPEG_VERSION="7.0" \
+    && wget "https://johnvansickle.com/ffmpeg/releases/ffmpeg-${FFMPEG_VERSION}-amd64-static.tar.xz" \
+    && tar -xvf "ffmpeg-${FFMPEG_VERSION}-amd64-static.tar.xz" \
+    && mv "ffmpeg-${FFMPEG_VERSION}-amd64-static/ffmpeg" "ffmpeg-${FFMPEG_VERSION}-amd64-static/ffprobe" /usr/local/bin/ \
+    && rm -rf "ffmpeg-${FFMPEG_VERSION}-amd64-static.tar.xz" "ffmpeg-${FFMPEG_VERSION}-amd64-static"
 
 COPY pyproject.toml .
 RUN uv pip install --system --no-cache .
