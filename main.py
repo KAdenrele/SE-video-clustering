@@ -29,7 +29,7 @@ def main():
     EPOCHS = 10
     BATCH_SIZE = 8
     EMBEDDING_DIM = 512
-    OUTPUT_DIR = "/workspace/video_cluster"
+    OUTPUT_DIR = "/workspace/video_cluster/outputs"
     TRANSFORMED_DATA_DIR = "/workspace/video_cluster/transformed_data"
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     
