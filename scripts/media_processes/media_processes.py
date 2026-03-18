@@ -99,11 +99,11 @@ class SocialMediaSimulator:
         ]
 
         try:
-            subprocess.run(cmd, check=True, stderr=subprocess.DEVNULL)
+            subprocess.run(cmd, check=True, capture_output=True, text=True)
             print(f"Saved to: {output_path}")
         except subprocess.CalledProcessError as e:
-            print(f"Facebook video pipeline failed: {e}")
-    
+            print(f"Facebook video pipeline failed for {input_path}.\nFFmpeg command: {' '.join(cmd)}\nFFmpeg stderr: {e.stderr}")
+
     def _facebook_process_image(self, input_path, output_path):
         try:
             print(f"\n Facebook Processing: {os.path.basename(input_path)} ")
@@ -212,11 +212,10 @@ class SocialMediaSimulator:
                 output_path
             ]
             try:
-                subprocess.run(cmd, check=True, stderr=subprocess.DEVNULL)
+                subprocess.run(cmd, check=True, capture_output=True, text=True)
                 print(f"Saved Video: {output_path}")
-            except Exception:
-                print("IG pipeline failed.")
-
+            except subprocess.CalledProcessError as e:
+                print(f"IG pipeline failed for {input_path} ({post_type}).\nFFmpeg command: {' '.join(cmd)}\nFFmpeg stderr: {e.stderr}")
 
     # =========================================================================
     # WHATSAPP
@@ -290,11 +289,11 @@ class SocialMediaSimulator:
             output_path
         ]
         try:
-            subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(cmd, check=True, capture_output=True, text=True)
             print(f"Saved Video: {output_path}")
-        except Exception:
-            print(" WA Video failed.")
-
+        except subprocess.CalledProcessError as e:
+            print(f"WA Video failed for {input_path}.\nFFmpeg command: {' '.join(cmd)}\nFFmpeg stderr: {e.stderr}")
+ 
     # =========================================================================
     # SIGNAL
     # =========================================================================
@@ -369,11 +368,11 @@ class SocialMediaSimulator:
         ]
         print(f"  [Video] Applying aggressive compression (Max 640p, {bitrate} bitrate)...")
         try:
-            subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(cmd, check=True, capture_output=True, text=True)
             print(f"Saved Video: {output_path}")
-        except Exception:
-            print(" Signal Video failed.")
-
+        except subprocess.CalledProcessError as e:
+            print(f"Signal Video failed for {input_path}.\nFFmpeg command: {' '.join(cmd)}\nFFmpeg stderr: {e.stderr}")
+ 
     # =========================================================================
     # TELEGRAM
     # =========================================================================
@@ -448,11 +447,11 @@ class SocialMediaSimulator:
         ]
         print(f"  [Video] Applying standard compression (Max 720p, {bitrate} bitrate)...")
         try:
-            subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(cmd, check=True, capture_output=True, text=True)
             print(f"Saved Video: {output_path}")
-        except Exception:
-            print(" Telegram Video failed.")
-
+        except subprocess.CalledProcessError as e:
+            print(f"Telegram Video failed for {input_path}.\nFFmpeg command: {' '.join(cmd)}\nFFmpeg stderr: {e.stderr}")
+ 
     # =========================================================================
     # TIKTOK
     # =========================================================================
@@ -488,8 +487,11 @@ class SocialMediaSimulator:
                 '-pix_fmt', 'yuv420p', '-map_metadata', '-1',
                 output_path
             ]
-            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            print(f"Transcoded to Vertical. Bitrate changed to 2.5Mbps. Saved to: {output_path}")
+            try:
+                subprocess.run(cmd, check=True, capture_output=True, text=True)
+                print(f"Transcoded to Vertical. Bitrate changed to 2.5Mbps. Saved to: {output_path}")
+            except subprocess.CalledProcessError as e:
+                print(f"TikTok video pipeline failed for {input_path}.\nFFmpeg command: {' '.join(cmd)}\nFFmpeg stderr: {e.stderr}")
         else:
             try:
                 with Image.open(input_path) as img:
