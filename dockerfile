@@ -9,7 +9,8 @@ WORKDIR /workspace
 RUN apt-get update && apt-get install -y \
     libgl1-mesa-glx \
     libglib2.0-0 \
-    && rm -rf /var/lib/apt/lists/*
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/* 
 
 COPY pyproject.toml .
 RUN uv pip install --system --no-cache .

@@ -16,6 +16,17 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import classification_report
 import logging
 
+LABEL_MAP = {
+    "BDAnimateDiffLightning": "ByteDance AnimateDiff Lightning",
+    "CogVideoX5B": "CogVideoX",
+    "LTX2_3": "LTX Video",
+    "Real": "Authentic (Real Video)",
+    "RunwayML": "Runway",
+    "StableDiffusion": "Stable Diffusion",
+    "VideoPoet": "Google VideoPoet",
+    "Wanimate": "Wanimate",
+}
+
 
 class VideoDirectoryDataset(Dataset):
     """Loads videos from a directory where subfolders represent class labels."""
@@ -256,7 +267,7 @@ def evaluate_on_holdout_set(train_embeddings, train_labels, test_embeddings, tes
     y_pred = knn.predict(test_embeddings)
     
     report_str = classification_report(
-        test_labels, 
+        test_labels,
         y_pred, 
         labels=range(len(class_names)), 
         target_names=class_names, 
@@ -264,7 +275,7 @@ def evaluate_on_holdout_set(train_embeddings, train_labels, test_embeddings, tes
     )
     report_dict = classification_report(
         test_labels, 
-        y_pred, 
+        y_pred,
         labels=range(len(class_names)),
         target_names=class_names, 
         output_dict=True, 
@@ -274,14 +285,84 @@ def evaluate_on_holdout_set(train_embeddings, train_labels, test_embeddings, tes
     logging.info("Holdout Set Evaluation Complete.")
     print(report_str)
     
+    return pd.DataFrame(report_dict).T, knn
+
+def evaluate_on_transformed_data(knn_classifier, model, test_videos, transformed_data_dir, dataset, device, transform):
+    """
+    Evaluates a trained model and k-NN classifier on a directory of transformed videos.
+
+    This function iterates through the transformed data, finds files corresponding to the
+    holdout set, runs predictions, and compiles the results.
+    """
+    results = []
+    all_embeddings = []
+    all_labels = []
+    model.eval()
+
+    # Create a map from original filename (without extension) to its true label index
+    holdout_map = {os.path.splitext(os.path.basename(path))[0]: label for path, label in test_videos}
+
+    logging.info("Scanning transformed data directory for holdout set videos...")
+    for root, _, files in os.walk(transformed_data_dir):
+        for file in files:
+            file_basename_no_ext = os.path.splitext(file)[0]
+
+            if file_basename_no_ext in holdout_map:
+                transformed_path = os.path.join(root, file)
+                actual_label_idx = holdout_map[file_basename_no_ext]
+                pipeline_name = os.path.basename(root)
+
+                # Extract frames, create tensor, and move to device
+                frames = dataset.extract_frames(transformed_path)
+                if not frames or len(frames) < dataset.num_frames:
+                    logging.warning(f"Could not extract sufficient frames from {transformed_path}, skipping.")
+                    continue
+
+                frames_tensor = torch.stack([transform(T.ToTensor()(f)) for f in frames])
+                frames_tensor = frames_tensor.unsqueeze(0).to(device)
+
+                # Adjust tensor shape for 3D models
+                if isinstance(model, VideoResNet3D):
+                    frames_tensor = frames_tensor.permute(0, 2, 1, 3, 4)
+
+                # Get embedding and predict with k-NN
+                with torch.no_grad():
+                    embedding = model(frames_tensor)
+                    embedding = F.normalize(embedding, p=2, dim=1)
+                    pred_label_idx = knn_classifier.predict(embedding.cpu().numpy())[0]
+
+                all_embeddings.append(embedding.cpu().numpy())
+                all_labels.append(actual_label_idx)
+
+                results.append({
+                    "pipeline": pipeline_name,
+                    "predicted_label": dataset.classes[pred_label_idx],
+                    "actual_label": dataset.classes[actual_label_idx],
+                    "predicted_label_idx": pred_label_idx,
+                    "actual_label_idx": actual_label_idx,
+                })
+
+    return pd.DataFrame(results), np.concatenate(all_embeddings), np.array(all_labels)
+
+def generate_report_from_results(results_df, class_names):
+    """Generates a classification report DataFrame from a raw results DataFrame."""
+    report_dict = classification_report(
+        results_df['actual_label_idx'],
+        results_df['predicted_label_idx'],
+        labels=range(len(class_names)),
+        target_names=class_names,
+        output_dict=True,
+        zero_division=0
+    )
     return pd.DataFrame(report_dict).T
 
-def save_evaluation_results(holdout_df, output_path):
+def save_evaluation_results(report_df, output_path, header="Holdout Test Set Results"):
     """Saves holdout evaluation DataFrames to a single CSV file."""
     try:
         with open(output_path, 'w') as f:
-            f.write("\n\nHoldout Test Set Results\n")
-            holdout_df.to_csv(f)
+            if header:
+                f.write(f"{header}\n")
+            report_df.to_csv(f)
         logging.info(f"Evaluation results saved to {output_path}")
     except Exception as e:
         logging.error(f"Failed to save evaluation results: {e}")
@@ -304,6 +385,7 @@ def plot_clusters(embeddings, labels, class_names, video_paths=None, output_path
         't-SNE Component 2': embeddings_2d[:, 1],
         'Generator Model': label_names
     })
+    df['Generator Model'] = df['Generator Model'].map(LABEL_MAP)  # Map to nicer names for the legend
 
  
     # Set a clean, academic style

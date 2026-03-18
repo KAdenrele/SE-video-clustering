@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader, Subset
 from scripts.dataset_generators.deepaction import main as download_deepaction_dataset
 from scripts.dataset_generators.wanimate2_1 import main as download_wanimate_dataset
 from scripts.dataset_generators.k400 import download_real_k400_videos
+from scripts.media_processes.video_processes_pipeline import process_videos
 from scripts.cluster_videos import (
     VideoDirectoryDataset, 
     VideoResNet, 
@@ -14,6 +15,8 @@ from scripts.cluster_videos import (
     extract_embeddings,
     plot_clusters,
     evaluate_on_holdout_set,
+    generate_report_from_results,
+    evaluate_on_transformed_data,
     save_evaluation_results
 )
 from sklearn.model_selection import train_test_split
@@ -22,16 +25,12 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def main():
-    logging.info("Downloading Datasets")
-    # download_deepaction_dataset()
-    # download_wanimate_dataset()
-    # download_real_k400_videos(target_count=300)
-
     DATA_DIR = "/workspace/video_data"
     EPOCHS = 10
     BATCH_SIZE = 8
     EMBEDDING_DIM = 512
     OUTPUT_DIR = "/workspace/video_cluster"
+    TRANSFORMED_DATA_DIR = "/workspace/video_cluster/transformed_data"
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -70,7 +69,8 @@ def main():
     train_eval_loader = DataLoader(train_subset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
     test_loader = DataLoader(test_subset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
     
-    test_video_paths = [os.path.join(*dataset.videos[i][0].split(os.sep)[-2:]) for i in test_indices]
+    test_videos = [dataset.videos[i] for i in test_indices]
+    test_video_paths = [os.path.join(os.path.basename(os.path.dirname(p)), os.path.basename(p)) for p, l in test_videos]
 
     # ==========================================
     # 2D RESNET PIPELINE
@@ -86,7 +86,7 @@ def main():
     train_emb_2d, train_lbl_2d = extract_embeddings(model_2d, train_eval_loader, device)
     test_emb_2d, test_lbl_2d = extract_embeddings(model_2d, test_loader, device)
 
-    report_2d = evaluate_on_holdout_set(
+    report_2d, _ = evaluate_on_holdout_set(
         train_emb_2d, train_lbl_2d, test_emb_2d, test_lbl_2d, class_names=dataset.classes, n_neighbors=7
     )
 
@@ -109,14 +109,60 @@ def main():
     train_emb_3d, train_lbl_3d = extract_embeddings(model_3d, train_eval_loader, device)
     test_emb_3d, test_lbl_3d = extract_embeddings(model_3d, test_loader, device)
 
-    report_3d = evaluate_on_holdout_set(
+    report_3d, knn_3d = evaluate_on_holdout_set(
         train_emb_3d, train_lbl_3d, test_emb_3d, test_lbl_3d, class_names=dataset.classes, n_neighbors=7
     )
 
     save_evaluation_results(report_3d, output_path=os.path.join(OUTPUT_DIR, "evaluation_metrics_3D.csv"))
     plot_clusters(test_emb_3d, test_lbl_3d, dataset.classes, video_paths=test_video_paths, output_path=os.path.join(OUTPUT_DIR, "test_set_cluster_plot_3D.png"))
 
+    # =================================================
+    # 3D RESNET - TRANSFORMED HOLDOUT SET EVALUATION
+    # =================================================
+    logging.info("STARTING EVALUATION ON TRANSFORMED HOLDOUT SET (3D MODEL)")
+
+    if os.path.isdir(TRANSFORMED_DATA_DIR):
+        transformed_results_df, transformed_embeddings, transformed_labels = evaluate_on_transformed_data(
+            knn_classifier=knn_3d,
+            model=model_3d,
+            test_videos=test_videos,
+            transformed_data_dir=TRANSFORMED_DATA_DIR,
+            dataset=dataset,
+            device=device,
+            transform=transform
+        )
+
+        # Save the detailed, per-video results
+        transformed_results_path = os.path.join(OUTPUT_DIR, "transformed_evaluation_raw_results_3D.csv")
+        transformed_results_df.to_csv(transformed_results_path, index=False)
+        logging.info(f"Saved raw transformed evaluation results to {transformed_results_path}")
+
+        # Generate, print, and save the summary classification report
+        report_df = generate_report_from_results(transformed_results_df, dataset.classes)
+        
+        logging.info("Classification Report for Transformed Holdout Set (3D Model)")
+        print(report_df)
+
+        save_evaluation_results(report_df, output_path=os.path.join(OUTPUT_DIR, "transformed_evaluation_metrics_3D.csv"), header="Transformed Holdout Set Classification Report (3D Model)")
+
+        logging.info("Generating cluster plot for transformed data...")
+        plot_clusters(
+            transformed_embeddings,
+            transformed_labels,
+            dataset.classes,
+            output_path=os.path.join(OUTPUT_DIR, "transformed_test_set_cluster_plot_3D.png")
+        )
+    else:
+        logging.warning(f"Transformed data directory not found at {TRANSFORMED_DATA_DIR}. Skipping evaluation on transformed videos.")
+
     logging.info("A/B Testing Pipeline Complete!")
 
 if __name__ == "__main__":
+    #logging.info("Downloading Datasets")
+    # download_deepaction_dataset()
+    # download_wanimate_dataset()
+    # download_real_k400_videos(target_count=300)
+    logging.info("Transforming Videos with Social Media Simulators")
+    process_videos(input_dir="/workspace/video_data", output_dir="/workspace/video_cluster/transformed_data")
+    logging.info("Running full training and evaluation pipeline on original and transformed videos")
     main()
