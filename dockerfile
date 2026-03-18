@@ -21,7 +21,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && FFMPEG_VERSION="7.0" \
     && wget "https://johnvansickle.com/ffmpeg/releases/ffmpeg-${FFMPEG_VERSION}-amd64-static.tar.xz" \
     && tar -xvf "ffmpeg-${FFMPEG_VERSION}-amd64-static.tar.xz" \
-    && mv "ffmpeg-${FFMPEG_VERSION}-amd64-static/ffmpeg" "ffmpeg-${FFMPEG_VERSION}-amd64-static/ffprobe" /usr/local/bin/ \
+    #Move ffmpeg directly into Conda's bin folder to overwrite the bad version
+    && mv "ffmpeg-${FFMPEG_VERSION}-amd64-static/ffmpeg" "ffmpeg-${FFMPEG_VERSION}-amd64-static/ffprobe" /opt/conda/bin/ \
     && rm -rf "ffmpeg-${FFMPEG_VERSION}-amd64-static.tar.xz" "ffmpeg-${FFMPEG_VERSION}-amd64-static"
 
 COPY pyproject.toml .
