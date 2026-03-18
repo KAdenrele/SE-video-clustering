@@ -199,7 +199,11 @@ class SocialMediaSimulator:
                 vf_filters = ["scale=1080:-2", "crop=1080:min(ih\\,1350):0:(ih-oh)/2"]
                 target_bitrate = "3500k"
             elif post_type in ['story', 'reel']:
-                vf_filters = ["scale=1080:-2", "crop=1080:1920:0:(ih-oh)/2"]
+                # Scale to fit inside 1080x1920, then pad the remaining space with black
+                vf_filters = [
+                    "scale=1080:1920:force_original_aspect_ratio=decrease",
+                    "pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black"
+                ]
                 if post_type == 'story': audio_channels = "1"
 
             cmd = [
