@@ -14,6 +14,7 @@ import seaborn as sns
 import pandas as pd
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import classification_report
+from scipy.spatial.distance import cdist
 import logging
 
 LABEL_MAP = {
@@ -366,6 +367,51 @@ def save_evaluation_results(report_df, output_path, header="Holdout Test Set Res
         logging.info(f"Evaluation results saved to {output_path}")
     except Exception as e:
         logging.error(f"Failed to save evaluation results: {e}")
+
+def calculate_cluster_distances(embeddings, labels, class_names, output_path="cluster_distances.csv"):
+    """
+    Calculates the pairwise distance between the normalized centroids of each cluster
+    in the ArcFace hypersphere and saves a matrix to CSV.
+    """
+    logging.info("Calculating ArcFace cluster centroid distances")
+    
+    unique_labels = np.unique(labels)
+    centroids = []
+    valid_class_names = []
+    
+    #Find the true center of each class on the hypersphere
+    for label in unique_labels:
+        # Get all embeddings belonging to this specific generator
+        class_embeddings = embeddings[labels == label]
+        
+        #Calculate the raw mathematical mean
+        mean_vector = np.mean(class_embeddings, axis=0)
+        
+        #L2 Normalise to push the centroid back onto the hypersphere surface
+        normalised_centroid = mean_vector / np.linalg.norm(mean_vector)
+        
+        centroids.append(normalised_centroid)
+        
+        #map the label index to the string name 
+        raw_name = class_names[label]
+        valid_class_names.append(LABEL_MAP.get(raw_name, raw_name)) 
+        
+    centroids = np.array(centroids)
+    
+    # Calculate pairwise distances - We use Cosine Distance (1 - cosine similarity) because ArcFace optimizes angles!
+    dist_matrix = cdist(centroids, centroids, metric='cosine')
+    
+
+    dist_df = pd.DataFrame(dist_matrix, index=valid_class_names, columns=valid_class_names)
+    
+    try:
+        dist_df.to_csv(output_path)
+        logging.info(f"Cluster distance matrix saved to {output_path}")
+    except Exception as e:
+        logging.error(f"Failed to save cluster distances: {e}")
+        
+    return dist_df
+
 
 # ==========================================
 # VISUALISATION 

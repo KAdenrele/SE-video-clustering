@@ -17,6 +17,7 @@ from scripts.cluster_videos import (
     evaluate_on_holdout_set,
     generate_report_from_results,
     evaluate_on_transformed_data,
+    calculate_cluster_distances,
     save_evaluation_results
 )
 from sklearn.model_selection import train_test_split
@@ -115,6 +116,7 @@ def main():
 
     save_evaluation_results(report_3d, output_path=os.path.join(OUTPUT_DIR, "evaluation_metrics_3D.csv"))
     plot_clusters(test_emb_3d, test_lbl_3d, dataset.classes, video_paths=test_video_paths, output_path=os.path.join(OUTPUT_DIR, "test_set_cluster_plot_3D.png"))
+    calculate_cluster_distances(test_emb_3d, test_lbl_3d, dataset.classes, output_path=os.path.join(OUTPUT_DIR, "cluster_distances_3D.csv"))
 
     # =================================================
     # 3D RESNET - TRANSFORMED HOLDOUT SET EVALUATION
@@ -131,6 +133,7 @@ def main():
             device=device,
             transform=transform
         )
+        calculate_cluster_distances(transformed_embeddings, transformed_labels, dataset.classes, output_path=os.path.join(OUTPUT_DIR, "cluster_distances_transformed_3D.csv"))
 
         # Save the detailed, per-video results
         transformed_results_path = os.path.join(OUTPUT_DIR, "transformed_evaluation_raw_results_3D.csv")

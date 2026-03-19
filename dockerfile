@@ -31,7 +31,7 @@ RUN uv pip install --system --no-cache .
 COPY main.py .
 COPY scripts/ ./scripts/
 
-ENV TORCH_HOME /workspace/models
+ENV TORCH_HOME=/workspace/models
 
 
 VOLUME /workspace/video_data
