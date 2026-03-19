@@ -329,9 +329,6 @@ def evaluate_on_transformed_data(knn_classifier, model, test_videos, transformed
                 frames_tensor = torch.stack([transform(T.ToTensor()(f)) for f in frames])
                 frames_tensor = frames_tensor.unsqueeze(0).to(device)
 
-                # Adjust tensor shape for 3D models
-                if isinstance(model, VideoResNet3D):
-                    frames_tensor = frames_tensor.permute(0, 2, 1, 3, 4)
 
                 # Get embedding and predict with k-NN
                 with torch.no_grad():
