@@ -27,7 +27,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 def main():
     DATA_DIR = "/workspace/video_data"
-    EPOCHS = 10
+    EPOCHS = 20
     BATCH_SIZE = 8
     EMBEDDING_DIM = 512
     OUTPUT_DIR = "/workspace/video_cluster/outputs"

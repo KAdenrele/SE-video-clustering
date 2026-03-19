@@ -205,7 +205,7 @@ class ArcFaceLayer(nn.Module):
 # TRAINING & EXTRACTION
 # ==========================================
 def train_arcface(model, arcface_layer, dataloader, epochs, device, save_prefix="2d_model"):
-    """Trains the embedding model using ArcFace loss."""
+    """Trains the embedding model using ArcFace loss and a Learning Rate Scheduler."""
     model.train()
     arcface_layer.train()
     
@@ -213,6 +213,9 @@ def train_arcface(model, arcface_layer, dataloader, epochs, device, save_prefix=
     optimizer = torch.optim.Adam(
         list(model.parameters()) + list(arcface_layer.parameters()), lr=1e-4
     )
+    
+
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.5)
 
     logging.info(f"Starting ArcFace Training for {save_prefix}")
     for epoch in range(epochs):
@@ -229,13 +232,17 @@ def train_arcface(model, arcface_layer, dataloader, epochs, device, save_prefix=
             optimizer.step()
             
             total_loss += loss.item()
-        logging.info(f"Epoch {epoch+1}/{epochs} | Loss: {total_loss/len(dataloader):.4f}")
+
+        scheduler.step()
+        
+        current_lr = optimizer.param_groups[0]['lr']
+        
+        logging.info(f"Epoch {epoch+1}/{epochs} | Loss: {total_loss/len(dataloader):.4f} | LR: {current_lr:.1e}")
 
     model_dir = os.environ.get("TORCH_HOME", "./")
     os.makedirs(model_dir, exist_ok=True)
     logging.info(f"Saving trained models to {model_dir}")
 
-  
     model_path = os.path.join(model_dir, f"{save_prefix}_resnet.pth")
     torch.save(model.state_dict(), model_path)
 
