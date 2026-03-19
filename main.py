@@ -76,23 +76,23 @@ def main():
     # ==========================================
     # 2D RESNET PIPELINE
     # ==========================================
-    logging.info("STARTING 2D MODEL PIPELINE")
+    # logging.info("STARTING 2D MODEL PIPELINE")
     
-    model_2d = VideoResNet(embedding_dim=EMBEDDING_DIM).to(device)
-    arcface_2d = ArcFaceLayer(in_features=EMBEDDING_DIM, num_classes=num_classes).to(device)
+    # model_2d = VideoResNet(embedding_dim=EMBEDDING_DIM).to(device)
+    # arcface_2d = ArcFaceLayer(in_features=EMBEDDING_DIM, num_classes=num_classes).to(device)
 
-    train_arcface(model_2d, arcface_2d, train_loader, epochs=EPOCHS, device=device, save_prefix="2d")
+    # train_arcface(model_2d, arcface_2d, train_loader, epochs=EPOCHS, device=device, save_prefix="2d")
 
-    logging.info("Extracting embeddings for evaluation...")
-    train_emb_2d, train_lbl_2d = extract_embeddings(model_2d, train_eval_loader, device)
-    test_emb_2d, test_lbl_2d = extract_embeddings(model_2d, test_loader, device)
+    # logging.info("Extracting embeddings for evaluation...")
+    # train_emb_2d, train_lbl_2d = extract_embeddings(model_2d, train_eval_loader, device)
+    # test_emb_2d, test_lbl_2d = extract_embeddings(model_2d, test_loader, device)
 
-    report_2d, _ = evaluate_on_holdout_set(
-        train_emb_2d, train_lbl_2d, test_emb_2d, test_lbl_2d, class_names=dataset.classes, n_neighbors=7
-    )
+    # report_2d, _ = evaluate_on_holdout_set(
+    #     train_emb_2d, train_lbl_2d, test_emb_2d, test_lbl_2d, class_names=dataset.classes, n_neighbors=7
+    # )
 
-    save_evaluation_results(report_2d, output_path=os.path.join(OUTPUT_DIR, "evaluation_metrics_2D.csv"))
-    plot_clusters(test_emb_2d, test_lbl_2d, dataset.classes, video_paths=test_video_paths, output_path=os.path.join(OUTPUT_DIR, "test_set_cluster_plot_2D.png"))
+    # save_evaluation_results(report_2d, output_path=os.path.join(OUTPUT_DIR, "evaluation_metrics_2D.csv"))
+    # plot_clusters(test_emb_2d, test_lbl_2d, dataset.classes, video_paths=test_video_paths, output_path=os.path.join(OUTPUT_DIR, "test_set_cluster_plot_2D.png"))
 
 
 
